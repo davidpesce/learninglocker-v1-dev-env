@@ -1,0 +1,41 @@
+---
+
+- name: Install yum-config-manager
+  yum: 
+    name: yum-utils
+    state: latest
+
+- name: Install Remi Collet Repository
+  yum: name="http://rpms.famillecollet.com/enterprise/remi-release-7.rpm" state=present
+  tags:
+   - install
+   - repository
+   - remi collet
+
+
+- name: Enable Remi Collet Repository for future updates
+  shell: yum-config-manager --enable remi remi-php56
+  tags:
+   - enable
+   - repository
+   - remi collet
+
+
+- name: Install Apache, PHP and its dependencies
+  yum: name="{{ item }}" enablerepo=remi,remi-php56 state=present
+  with_items:
+    - httpd
+    - php
+    - php-common
+    - php-cli
+    - php-pear
+    - php-mysqlnd
+    - php-pecl-mongo
+    - php-gd
+    - php-mbstring
+    - php-mcrypt
+    - php-xml
+  tags:
+   - install
+   - apache
+   - php

@@ -1,0 +1,126 @@
+---
+
+- name: Install Git
+  yum: name=git state=present
+  tags:
+   - install
+   - git
+
+
+- name: Set proxies in Git
+  shell: "git config --global {{ item.var_name }} {{ item.proxy_value }}"
+  when: item.proxy_value
+  with_items:
+    - { var_name: 'http.proxy', proxy_value: '{{ proxy_env.http_proxy }}' }
+    - { var_name: 'https.proxy', proxy_value: '{{ proxy_env.https_proxy }}' }
+  tags:
+    - configure
+    - proxy
+
+
+- name: Unset proxies in Git
+  shell: git config --global --unset '{{ item.var_name }}'
+  when: not item.proxy_value
+  register: git_return
+  # rc==5 means that the option didn't exist, which is ok too.
+  # https://www.kernel.org/pub/software/scm/git/docs/git-config.html
+  failed_when: git_return.rc!=0 and git_return.rc!=5
+  with_items:
+    - { var_name: 'http.proxy', proxy_value: '{{ proxy_env.http_proxy }}' }
+    - { var_name: 'https.proxy', proxy_value: '{{ proxy_env.https_proxy }}' }
+  tags:
+    - configure
+    - proxy
+    - git
+
+
+- name: Install NodeJs and Node Package Manager (NPM)
+  yum: name="{{ item }}" state=present
+  with_items:
+    - nodejs
+    - npm
+  tags:
+   - install
+   - nodejs
+   - npm
+
+
+- name: Set proxies in NPM
+  shell: 'npm config set {{ item.var_name }} {{ item.proxy_value }}'
+  when: item.proxy_value  # if it is empty it does not execute it
+  with_items:
+    - { var_name: 'proxy', proxy_value: '{{ proxy_env.http_proxy }}' }
+    - { var_name: 'https-proxy', proxy_value: '{{ proxy_env.https_proxy }}' }
+  tags:
+    - configure
+    - proxy
+    - nmp
+
+
+- name: Unset proxies in NPM
+  shell: 'npm config rm {{ item.var_name }}'
+  when: not item.proxy_value  # if it is empty it does not execute it
+  with_items:
+    - { var_name: 'proxy', proxy_value: '{{ proxy_env.http_proxy }}' }
+    - { var_name: 'https-proxy', proxy_value: '{{ proxy_env.https_proxy }}' }
+  register: npm_return
+  # rc==34 means that the variable wasn't configured, which is ok too.
+  failed_when: npm_return.rc!=0 and npm_return.rc!=34
+  tags:
+    - configure
+    - proxy
+    - nmp
+
+
+- name: Install Bower
+  npm: name=bower global=yes
+  tags:
+   - install
+   - bower
+
+
+- name: Install DeltaRPM
+  yum: name=deltarpm state=present
+  tags:
+   - install
+   - deltarpm
+
+
+- name: Download Composer (without proxy)
+  shell: "curl -sS https://getcomposer.org/installer | php"
+  when: not proxy_env.https_proxy
+  tags:
+   - download
+   - composer
+   - global
+
+
+- name: Download Composer (with proxy)
+  shell: "curl --proxy {{ proxy_env.https_proxy }} -sS https://getcomposer.org/installer | php"
+  when: proxy_env.https_proxy
+  ignore_errors: True
+  tags:
+   - download
+   - composer
+   - global
+
+
+- name: Install Composer and set global launch
+  shell: 'mv {{ ansible_env.HOME }}/composer.phar /usr/local/bin/composer'
+  tags:
+   - install
+   - composer
+   - global
+
+
+- name: Make composer executable by the user
+  file:
+    path: /usr/local/bin/composer
+    state: file
+    owner: '{{ ansible_env.USER }}'
+    group: '{{ ansible_env.USER }}'
+    mode: ug+x
+  tags:
+   - permissions
+   - composer
+   - global

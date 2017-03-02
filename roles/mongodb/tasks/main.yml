@@ -1,0 +1,67 @@
+---
+
+- name: Install EPEL Repository
+  yum: name="http://dl.fedoraproject.org/pub/epel/7/x86_64/e/epel-release-7-9.noarch.rpm" state=present
+  become: True
+  tags:
+   - install
+   - repository
+   - epel
+
+
+- name: Install MongoDB
+  yum: name="{{ item }}" state=present
+  become: True
+  with_items:
+   - mongodb
+   - mongodb-server
+   - python-pymongo  # To create user afterwards
+  tags:
+   - install
+   - mongodb
+
+
+- name: Listen in all interfaces
+  replace:
+    dest: /etc/mongod.conf
+    regexp: '^(\s*bind_ip\s*=\s*127\.0\.0\.1\s*)$'
+    replace: '# \1'
+    backup: yes
+  become: True
+  tags:
+   - configure
+   - mongodb
+
+
+- name: Start MongoDB and enable automatic startup
+  shell: "systemctl {{ item }} mongod"
+  become: True
+  with_items:
+   - start
+   - enable
+  tags:
+   - start
+   - enable
+   - mongo
+   - daemon
+   - systemctl
+
+
+- name: Check if user already exists
+  shell: mongo admin --eval 'db.system.users.find({user:"{{ mongodb_private.user }}"}).count()'
+  register: muser
+  tags:
+   - mongodb
+   - user
+   - exists
+
+
+- name: Create user for LearningLocker database
+  # For some reason, mongodb_user does not work
+  #mongodb_user: database="{{ mongodb.database }}" name="{{ mongodb_private.user }}" password="{{ mongodb_private.password }}" state=present
+  shell: mongo {{ mongodb.database }} --eval 'db.createUser({user:"{{ mongodb_private.user }}",pwd:"{{ mongodb_private.password }}",roles:["readWrite"]})'
+  when: muser.stdout_lines[-1] == '0'  # Only if user does not exist
+  tags:
+   - mongodb
+   - user
+   - configure

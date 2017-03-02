@@ -1,0 +1,29 @@
+---
+
+- name: Install LearningLocker's dependencies
+  include: dependencies.yml
+  become: True
+
+
+- name: Check if LearningLocker is already installed
+  stat: path="{{ ll_path }}"
+  register: ll
+
+
+- name: LearningLocker installation
+  include: install.yml
+  when: not ll.stat.exists
+
+
+- name: LearningLocker configuration
+  include: configure.yml
+
+
+- name: Create administrator
+  include: create_admin.yml
+  when: ll_admin is defined and ll_admin.username is defined and ll_admin.email is defined and ll_admin.password is defined
+
+
+- name: Next steps
+  debug: msg="Please, go to the newly installed LearningLocker website and register your administrator user."
+  when: ll_admin is not defined or ll_admin.username is not defined or ll_admin.email is not defined or ll_admin.password is not defined

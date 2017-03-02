@@ -1,0 +1,8 @@
+ll_path: "/var/www/learninglocker"
+ll_repo: "https://github.com/LearningLocker/learninglocker.git"
+ll_repo_version: "HEAD"
+
+# MongoDB's public configuration
+mongodb:
+  database: learninglocker
+  host: "{{ mongodb_host | default('localhost')}}"

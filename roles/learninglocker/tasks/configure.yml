@@ -1,0 +1,82 @@
+---
+
+
+# To test it:
+# >>> with open ("/var/www/learninglocker/app/config/database.php", "r") as myfile:
+# ...     data=myfile.read(
+# >>> m = re.search(r"('mongodb'\s*=>\s*array.*(?:\n.+)*\s*'username'\s*=>\s*).*(,)", data, re.MULTILINE)
+# >>> m.groups()
+
+- name: Configure LearningLocker database's configuration details
+  replace:
+    dest: "{{ ll_path }}/{{ item[0] }}"
+    regexp: ('mongodb'\s*=>\s*array.*(?:\n.+)*\s*'{{ item[1].name }}'\s*=>\s*).+?(,?\s*)$
+    replace: \1'{{ item[1].value }}'\2
+    backup: yes
+  become: True
+  ignore_errors: True  # One database.php file might not exist :-?
+  with_nested:
+    - [ 'app/config/local/database.php', 'app/config/database.php']
+    - [ { name: 'database', value: '{{ mongodb.database }}' },
+        { name: 'host', value: '{{ mongodb.host }}' },
+        { name: 'username', value: '{{ mongodb_private.user }}' },
+        { name: 'password', value: '{{ mongodb_private.password }}' } ]
+  tags:
+   - configuration
+   - learninglocker
+   - database
+
+
+- name: Finalize LL MongoDB setup
+  command: php artisan migrate chdir="{{ ll_path }}"
+  tags:
+   - configuration
+   - learninglocker
+   - php
+   - artisan
+
+
+# Check other ways to generate it:
+#    http://www.howtogeek.com/howto/30184/10-ways-to-generate-a-random-password-from-the-command-line/
+- name: Generate 32 bits random key
+  shell: date +%s | sha256sum | base64 | head -c 32 ; echo
+  register: randomKey
+
+
+- name: Add 32 bit key to LearningLocker's configuration file
+  replace:
+    dest: "{{ ll_path }}/app/config/app.php"
+    regexp: $(\s*'key'\s*=>\s*').+(',)
+    replace: \1{{ randomKey.stdout }}\2
+    backup: yes
+  become: True
+  tags:
+   - configuration
+   - learninglocker
+   - database
+
+
+- name: Set Apache DocumentRoot and Directory Settings
+  template: src=learninglocker.conf.j2 dest=/etc/httpd/conf.d/learninglocker.conf
+  become: True
+  tags:
+   - configuration
+   - apache
+   - learninglocker
+
+
+- name: Restart Apache
+  command: systemctl restart httpd.service
+  become: True
+  tags:
+   - restart
+   - apache
+
+
+- name: Set ownership of directories to Apache
+  file: path="{{ ll_path }}" owner=apache group=apache recurse=yes
+  become: True
+  tags:
+   - ownership
+   - learninglocker
+   - apache

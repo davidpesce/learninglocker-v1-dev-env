@@ -1,0 +1,56 @@
+---
+
+- name: Create LearningLocker directory
+  file: path="{{ ll_path }}" owner="{{ ansible_ssh_user }}" state=directory
+  become: True
+  tags:
+   - learninglocker
+   - directory
+
+
+- name: Clone LearningLocker
+  git:
+    repo: "{{ll_repo}}"
+    dest: "{{ ll_path }}"
+    version: "{{ll_repo_version}}"
+  tags:
+   - git
+   - clone
+   - learninglocker
+
+
+- name: Avoid using git (just in case it is blocked by the firewall)
+  command: git config --global url."https://".insteadOf git://
+  tags:
+    - git
+    - config
+
+
+- name: Set up Github OAuth key
+  command: composer config -g github-oauth.github.com {{ github_token }}
+  when: github_token != "false"
+# TODO Check that this does not create errors behind a proxy.
+#  ignore_errors: True
+  tags:
+   - github
+   - token
+   - oauth
+   - composer
+
+
+- name: Install LearningLocker
+  shell: composer install chdir="{{ ll_path }}"
+  tags:
+   - install
+   - learninglocker
+
+
+# TODO Further testing needed to find a better automatic alternative.
+# The previous task does not seem to work behind a proxy and it does
+# not give any error.
+- name: "Warning: Problems installing LearningLocker? Try the following command."
+  debug: msg="cd {{ ll_path }}; php composer.phar install"
+  tags:
+   - install
+   - learninglocker
+   - warning

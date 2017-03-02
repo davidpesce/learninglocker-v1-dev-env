@@ -1,0 +1,23 @@
+---
+
+
+- name: Install Ansible's URI module's 'httplib2' dependency
+  yum: name=python-httplib2 state=present
+  become: True
+  tags:
+   - install
+   - httplib2
+
+
+# Another alternative would be to use curl or to simply let the user decide
+- name: Create user
+  uri:
+    url: http://localhost/register
+    method: POST
+    body: "name={{ll_admin.username}}&email={{ll_admin.email}}&password={{ll_admin.password}}&password_confirmation={{ll_admin.password}}"
+    status_code: 302
+    HEADER_Content-Type: "application/x-www-form-urlencoded"
+  tags:
+   - create
+   - learninglocker
+   - user

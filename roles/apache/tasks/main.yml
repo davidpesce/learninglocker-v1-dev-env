@@ -1,0 +1,10 @@
+---
+
+- name: Install dependencies
+  include: dependencies.yml
+  become: True
+
+
+- name: Configure firewall and Apache
+  include: configure.yml
+  become: True
