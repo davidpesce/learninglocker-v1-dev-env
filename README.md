@@ -41,7 +41,7 @@ From this:
     
 To this:
 
-    MACHINES='./vagrant/two_machines'
+    machines_file ||= './vagrant/two_machines'
 
 If the installation is completed successfully, you will be able to:
 
