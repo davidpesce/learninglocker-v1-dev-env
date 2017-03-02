@@ -18,14 +18,10 @@ def generate_ansible_groups(machines)
 	    if not ansible_groups.has_key?(group)
 	      ansible_groups[group] = []
 	    end
-	    if not ansible_groups.has_key?("proxy:vars")
-	      ansible_groups["proxy:vars"] = []
-	    end
 	    ansible_groups[group].push(m["hostname"])
 	    all = all.add(group)
 	  end
 	end
-	ansible_groups["proxy:children"] = all.to_a
 	return ansible_groups
 end
 
