@@ -1,0 +1,8 @@
+# Ignoring Vagrant files
+.vagrant/
+
+# MacOS folders
+.DS_Store
+
+# Files with sensitive content that should not be shared
+vars.secret*.yml
