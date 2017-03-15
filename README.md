@@ -1,10 +1,15 @@
-# LearningLocker on CentOS7
+# LearningLocker on CentOS 7.3
 
 The main intent of this repository is for developers of LearningLocker (v1) to rapidly create a local instance of LearningLocker. 
 
-This project contains [Vagrant](https://www.vagrantup.com/) and [Ansible](http://www.ansible.com/) scripts to provision [CentOS7](https://www.centos.org/) machines with [LearningLocker](http://learninglocker.net/). 
+This project contains [Vagrant](https://www.vagrantup.com/) and [Ansible](http://www.ansible.com/) scripts to provision [CentOS 7.3](https://www.centos.org/) machines with [LearningLocker](http://learninglocker.net/). 
 
 This LearningLocker installation will depend on [Apache2](http://httpd.apache.org/) and [MongoDB](https://www.mongodb.org/).
+
+## Preparation
+1. Download and install Vagrant: https://www.vagrantup.com/downloads.html
+2. Install Ansible: http://docs.ansible.com/ansible/intro_installation.html
+   * If on Mac with Homebrew installed: http://brewformulas.org/Ansible
 
 ## Configuration
 
